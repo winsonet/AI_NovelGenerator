@@ -3,6 +3,7 @@
 
 import logging
 import os
+import re
 import threading
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
@@ -138,6 +139,8 @@ class NovelGeneratorGUI:
         self.key_items_var = ctk.StringVar(value=self.loaded_config.get("key_items", ""))
         self.scene_location_var = ctk.StringVar(value=self.loaded_config.get("scene_location", ""))
         self.time_constraint_var = ctk.StringVar(value=self.loaded_config.get("time_constraint", ""))
+        
+        self.chapter_lang_format_var = ctk.StringVar(value=self.loaded_config.get("chapter_lang_format", ""))
 
         # 用于存储本章指导（多行）
         self.user_guidance_default = self.loaded_config.get("user_guidance", "")
@@ -317,6 +320,7 @@ class NovelGeneratorGUI:
 
         self.ai_config_tab = self.config_tabview.add("LLM Model settings")
         self.embeddings_config_tab = self.config_tabview.add("Embedding settings")
+        
 
         self.build_ai_config_tab()
         self.build_embeddings_config_tab()
@@ -391,7 +395,7 @@ class NovelGeneratorGUI:
             column=0,
             font=("Microsoft YaHei", 12)
         )
-        api_key_entry = ctk.CTkEntry(self.ai_config_tab, textvariable=self.api_key_var, font=("Microsoft YaHei", 12))
+        api_key_entry = ctk.CTkEntry(self.ai_config_tab, textvariable=self.api_key_var, font=("Microsoft YaHei", 12), show="*")
         api_key_entry.grid(row=0, column=1, padx=5, pady=5, columnspan=2, sticky="nsew")
 
         # 2) Base URL
@@ -572,7 +576,7 @@ class NovelGeneratorGUI:
             column=0,
             font=("Microsoft YaHei", 12)
         )
-        emb_api_key_entry = ctk.CTkEntry(self.embeddings_config_tab, textvariable=self.embedding_api_key_var, font=("Microsoft YaHei", 12))
+        emb_api_key_entry = ctk.CTkEntry(self.embeddings_config_tab, textvariable=self.embedding_api_key_var, font=("Microsoft YaHei", 12), show="*")
         emb_api_key_entry.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
 
         # 2) Embedding 接口格式
@@ -647,7 +651,14 @@ class NovelGeneratorGUI:
         self.params_frame = ctk.CTkScrollableFrame(self.right_frame, orientation="vertical")
         self.params_frame.grid(row=start_row, column=0, sticky="nsew", padx=5, pady=5)
         self.params_frame.columnconfigure(1, weight=1)
-
+        
+        # def on_language_changed(new_value):
+        #     """
+        #     当切换语言时,设置对应值。
+        #     """
+        #     self.chapter_lang_format_var.set(new_value)         
+        
+      
         # 1) 主题(Topic)
         topic_label_frame = self.create_label_with_help(
             parent=self.params_frame,
@@ -736,11 +747,11 @@ class NovelGeneratorGUI:
         chapter_num_entry = ctk.CTkEntry(self.params_frame, textvariable=self.chapter_num_var, width=80, font=("Microsoft YaHei", 12))
         chapter_num_entry.grid(row=row_chap_num, column=1, padx=5, pady=5, sticky="w")
 
-        # 6) 本章指导
+        # 6) 本章要求
         row_user_guide = 5
         guide_label_frame = self.create_label_with_help(
             parent=self.params_frame,
-            label_text="本章指导:",
+            label_text="本章要求:",
             tooltip_key="user_guidance",
             row=row_user_guide,
             column=0,
@@ -801,7 +812,28 @@ class NovelGeneratorGUI:
             font=("Microsoft YaHei", 12)
         )
         time_const_entry = ctk.CTkEntry(self.params_frame, textvariable=self.time_constraint_var, font=("Microsoft YaHei", 12))
-        time_const_entry.grid(row=row_idx, column=1, padx=5, pady=5, sticky="ew")
+        time_const_entry.grid(row=row_idx, column=1, padx=5, pady=5, sticky="ew")        
+        row_idx += 1
+        
+         # 8) 生成章节内容的语言(Language)
+        self.create_label_with_help(
+            parent=self.params_frame,
+            label_text="章节内容的语言:",
+            tooltip_key="language",
+            row=row_idx,
+            column=0,
+            font=("Microsoft YaHei", 12),
+            sticky="ne"
+        )
+        chapter_lang_options = ["中文", "英文"]
+        chapter_lang_dropdown = ctk.CTkOptionMenu(
+            self.params_frame,
+            values=chapter_lang_options,
+            variable=self.chapter_lang_format_var,
+            # command=on_language_changed,
+            font=("Microsoft YaHei", 12)
+        )
+        chapter_lang_dropdown.grid(row=row_idx, column=1, padx=5, pady=5, sticky="ew")
 
     # ----------------- 可选功能按钮 -----------------
     def build_optional_buttons_area(self, start_row=2):
@@ -886,6 +918,7 @@ class NovelGeneratorGUI:
             self.key_items_var.set(cfg.get("key_items", ""))
             self.scene_location_var.set(cfg.get("scene_location", ""))
             self.time_constraint_var.set(cfg.get("time_constraint", ""))
+            self.chapter_lang_format_var.set(cfg.get("chapter_lang_format", "中文"))
 
             self.log("已加载配置。")
         else:
@@ -922,7 +955,8 @@ class NovelGeneratorGUI:
             "characters_involved": self.characters_involved_var.get(),
             "key_items": self.key_items_var.get(),
             "scene_location": self.scene_location_var.get(),
-            "time_constraint": self.time_constraint_var.get()
+            "time_constraint": self.time_constraint_var.get(),
+            "chapter_lang_format": self.chapter_lang_format_var.get()
         }
 
         if save_config(config_data, self.config_file):
@@ -1054,6 +1088,8 @@ class NovelGeneratorGUI:
                 key_items = self.key_items_var.get().strip()
                 scene_loc = self.scene_location_var.get().strip()
                 time_constr = self.time_constraint_var.get().strip()
+                chapter_lang_format = self.chapter_lang_format_var.get().strip()
+                
 
                 embedding_api_key = self.embedding_api_key_var.get().strip()
                 embedding_url = self.embedding_url_var.get().strip()
@@ -1082,7 +1118,8 @@ class NovelGeneratorGUI:
                     embedding_retrieval_k=embedding_k,
                     interface_format=interface_format,
                     max_tokens=max_tokens,
-                    timeout=timeout_val
+                    timeout=timeout_val,
+                    chapter_lang_format=chapter_lang_format
                 )
                 if draft_text:
                     self.safe_log(f"✅ 第{chap_num}章草稿生成完成。请在左侧查看或编辑。")
@@ -1141,12 +1178,15 @@ class NovelGeneratorGUI:
                 chapter_file = os.path.join(chapters_dir, f"chapter_{chap_num}.txt")
 
                 edited_text = self.chapter_result.get("0.0", "end").strip()
-
-                # 如果字数不足70%，询问是否扩写
-                if len(edited_text) < 0.7 * word_number:
+                
+                word_counter = self.count_chinese_and_english(edited_text)
+                self.safe_log("当前章节字数: " + str(word_counter))
+                
+                # 如果字数不足90%，询问是否扩写
+                if word_counter < 0.8 * word_number:
                     ask = messagebox.askyesno(
                         "字数不足",
-                        f"当前章节字数 ({len(edited_text)}) 低于目标字数({word_number})的70%，是否要尝试扩写？"
+                        f"当前章节字数 ({word_counter}) 低于目标字数({word_number})的70%，是否要尝试扩写？"
                     )
                     if ask:
                         # 调用 enrich_chapter_text 进行扩写
@@ -1582,6 +1622,7 @@ class NovelGeneratorGUI:
         """
         filepath = self.filepath_var.get().strip()
         chapters_dir = os.path.join(filepath, "chapters")
+        
         if not os.path.exists(chapters_dir):
             self.safe_log("尚未找到 chapters 文件夹，请先生成章节或检查保存路径。")
             self.chapter_select_menu.configure(values=[])
@@ -1724,6 +1765,19 @@ class NovelGeneratorGUI:
             handle_exception_func=self.handle_exception
         )
 
+    def count_chinese_and_english(self, text):
+        """
+        计算文本中的中文字符和英文单词数量
+        """
+        # 计算中文字符
+        chinese_count = len([char for char in text if '\u4e00' <= char <= '\u9fff'])
+        
+        # 计算英文单词
+        english_words = re.findall(r'\b[a-zA-Z]+\b', text)
+        english_word_count = len(english_words)
+
+        # 返回中文字符和英文单词的总数
+        return chinese_count + english_word_count
 
 # ----------------- 程序入口 -----------------
 if __name__ == "__main__":

@@ -831,7 +831,8 @@ def generate_chapter_draft(
     embedding_retrieval_k: int = 2,
     interface_format: str = "openai",
     max_tokens: int = 2048,
-    timeout: int = 600
+    timeout: int = 600,
+    chapter_lang_format: str = "中文",
 ) -> str:
     """
     根据 novel_number 判断是否为第一章。
@@ -884,7 +885,9 @@ def generate_chapter_draft(
             time_constraint=time_constraint,
             user_guidance=user_guidance,
 
-            novel_setting=novel_architecture_text
+            novel_setting=novel_architecture_text,
+            
+            chapter_lang=chapter_lang_format
         )
     else:
         # 若不是第一章，则获取最近几章文本，并做摘要与检索
@@ -961,7 +964,7 @@ def generate_chapter_draft(
         max_tokens=max_tokens,
         timeout=timeout
     )
-
+    # logging.info(f"[Draft] Chapter prompt_text: {prompt_text} ")
     chapter_content = invoke_with_cleaning(llm_adapter, prompt_text)
     if not chapter_content.strip():
         logging.warning("Generated chapter draft is empty.")

@@ -33,5 +33,6 @@ tooltips = {
     "characters_involved": "本章需要重点描写或影响剧情的角色名单。",
     "key_items": "在本章中出现的重要道具、线索或物品。",
     "scene_location": "本章主要发生的地点或场景描述。",
-    "time_constraint": "本章剧情中涉及的时间压力或时限设置。"
+    "time_constraint": "本章剧情中涉及的时间压力或时限设置。",
+    "language": "设置输出不同的语言，如中文、英文等。"
 }

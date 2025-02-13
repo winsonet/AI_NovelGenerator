@@ -352,7 +352,13 @@ first_chapter_draft_prompt = """\
 - 小说设定：
 {novel_setting}
 
-请完成第 {novel_number} 章的正文，字数要求{word_number}字，至少设计下方2个或以上具有动态张力的场景：
+请使用 {chapter_lang} 完成第 {novel_number} 章的正文, 同时要达到以下要求：
+
+字数要求{word_number}字
+
+{user_guidance}
+
+至少设计下方2个或以上具有动态张力的场景：
 1. 对话场景：
    - 潜台词冲突（表面谈论A，实际博弈B）
    - 权力关系变化（通过非对称对话长度体现）
@@ -381,7 +387,6 @@ first_chapter_draft_prompt = """\
 - 不使用分章节小标题；
 - 不要使用markdown格式。
 
-额外指导(可能未指定)：{user_guidance}
 """
 
 # 8.2 后续章节草稿提示
@@ -416,7 +421,10 @@ next_chapter_draft_prompt = """\
 前章结尾段：
 {previous_chapter_excerpt}
 
-依据前章结尾剧情，开始完成第 {novel_number} 章的正文，字数要求{word_number}字，确保与前章结尾衔接流畅，
+依据前章结尾剧情，开始使用 {chapter_lang} 完成第 {novel_number} 章的正文，字数要求{word_number}字，确保与前章结尾衔接流畅，
+
+同时要达到以下要求：
+{user_guidance}
 
 本章至少设计下方2个或以上具有动态张力的场景：
 1. 对话场景：
@@ -447,5 +455,4 @@ next_chapter_draft_prompt = """\
 - 不使用分章节小标题；
 - 不要使用markdown格式。
 
-额外指导(可能未指定)：{user_guidance}
 """
